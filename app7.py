@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
+import random
 
 # Function to load data
 def load_data(file_path):
@@ -21,12 +22,13 @@ def handle_query(df, query):
     query = query.lower()
 
     # Define keyword groups
-    top_keywords = ['top', 'best', 'highest', 'top 5', 'maximum revenue']
-    bottom_keywords = ['bottom', 'worst', 'lowest', 'bottom 5', 'minimum profit']
+    top_keywords = ['top', 'best', 'highest', 'top 5']
+    bottom_keywords = ['bottom', 'worst', 'lowest', 'bottom 5']
     company_keywords = ['company', 'companies']
     revenue_keywords = ['revenue', 'sales', 'total revenue', 'maximum revenue', 'total number of sales']
-    profit_keywords = ['profit', 'income', 'total earnings', 'total profit', 'maximum profit', 'maximum']
+    profit_keywords = ['profit', 'income', 'earnings', 'total profit', 'minimum profit']
     count_keywords = ['how many', 'number of', 'count']
+    random_keywords = ['random', 'any']
 
     # Handling queries for the top 5 companies by revenue or profit
     if any(keyword in query for keyword in top_keywords) and any(keyword in query for keyword in company_keywords):
@@ -34,7 +36,7 @@ def handle_query(df, query):
             top_5_revenue = df.nlargest(5, 'Revenue')[['Company', 'Revenue']]
             st.write("Top 5 companies by revenue:")
             st.write(top_5_revenue)
-        elif any(keyword in query for keyword in profit_keywords) and any(keyword in query for keyword in company_keywords):
+        elif any(keyword in query for keyword in profit_keywords):
             top_5_profit = df.nlargest(5, 'Profit')[['Company', 'Profit']]
             st.write("Top 5 companies by profit:")
             st.write(top_5_profit)
@@ -68,30 +70,38 @@ def handle_query(df, query):
 
     # Handling queries for highest profit
     elif 'highest' in query and 'profit' in query:
-        highest_profit = df.loc[df['Profit'].idxmax()][['Company', 'Profit']]
-        st.write("Company with the highest profit:")
-        st.write(highest_profit)
+        if 'company' in query:
+            highest_profit = df.loc[df['Profit'].idxmax()][['Company', 'Profit']]
+            st.write("Company with the highest profit:")
+            st.write(highest_profit)
+        elif 'companies' in query:
+            top_5_profit = df.nlargest(5, 'Profit')[['Company', 'Profit']]
+            st.write("Top 5 companies by profit:")
+            st.write(top_5_profit)
         return True
 
     # Handling queries for maximum revenue
     elif 'maximum' in query and 'revenue' in query:
-        max_revenue = df.loc[df['Revenue'].idxmax()][['Company', 'Revenue']]
-        st.write("Company with the maximum revenue:")
-        st.write(max_revenue)
+        if 'company' in query:
+            max_revenue = df.loc[df['Revenue'].idxmax()][['Company', 'Revenue']]
+            st.write("Company with the maximum revenue:")
+            st.write(max_revenue)
+        elif 'companies' in query:
+            top_5_revenue = df.nlargest(5, 'Revenue')[['Company', 'Revenue']]
+            st.write("Top 5 companies by revenue:")
+            st.write(top_5_revenue)
         return True
 
     # Handling queries for minimum profit
     elif 'minimum' in query and 'profit' in query:
-        min_profit = df.loc[df['Profit'].idxmin()][['Company', 'Profit']]
-        st.write("Company with the minimum profit:")
-        st.write(min_profit)
-        return True
-
-    # Handling queries for maximum profit
-    elif 'maximum' in query and 'profit' in query:
-        max_profit = df.loc[df['Profit'].idxmax()][['Company', 'Profit']]
-        st.write("Company with the maximum profit:")
-        st.write(max_profit)
+        if 'company' in query:
+            min_profit = df.loc[df['Profit'].idxmin()][['Company', 'Profit']]
+            st.write("Company with the minimum profit:")
+            st.write(min_profit)
+        elif 'companies' in query:
+            bottom_5_profit = df.nsmallest(5, 'Profit')[['Company', 'Profit']]
+            st.write("Bottom 5 companies by profit:")
+            st.write(bottom_5_profit)
         return True
 
     # Handling queries for total revenue
@@ -104,6 +114,13 @@ def handle_query(df, query):
     elif 'total' in query and 'profit' in query:
         total_profit = df['Profit'].sum()
         st.write(f"Total profit of all companies: {total_profit}")
+        return True
+
+    # Handling queries for random companies
+    elif any(keyword in query for keyword in random_keywords):
+        random_companies = df.sample(n=5)[['Company', 'Revenue', 'Profit']]
+        st.write("Here are 5 random companies:")
+        st.write(random_companies)
         return True
 
     # If the query contains a specific company name
@@ -146,7 +163,7 @@ def plot_charts(df, company_name):
 
     plt.figure(figsize=(10, 6))
     bar_plot = sns.barplot(x='Company', y='Revenue', data=top_5_and_user, palette='viridis')
-    plt.title('Revenue Model', color='red', fontsize=20)
+    plt.title('Revenue Model', color='white', fontsize=20)
     plt.xticks(rotation=30, ha='center', color='red')  # Rotate labels for better readability
     plt.tight_layout()
 
@@ -165,7 +182,7 @@ def plot_charts(df, company_name):
 
     plt.figure(figsize=(8, 8))
     plt.pie(top_5_profit_and_user['Profit'], labels=top_5_profit_and_user['Company'], autopct='%1.1f%%', colors=sns.color_palette("dark:#5A9_r", len(top_5_profit_and_user)))
-    plt.title('Market Share', color='red', fontsize=20)
+    plt.title('Market Share', color='white', fontsize=20)
     plt.tight_layout()
     st.pyplot(plt)
 
@@ -174,9 +191,9 @@ def plot_charts(df, company_name):
     plt.figure(figsize=(10, 6))
     bins = 20
     counts, bin_edges, patches = plt.hist(df['Profit'], bins=bins, color='skyblue', edgecolor='black', alpha=0.7, label='Profit Distribution')
-    plt.title('Profit Distribution', color='red', fontsize=20)
-    plt.xlabel('Profit', color='red')
-    plt.ylabel('Frequency', color='red')
+    plt.title('Profit Distribution', color='white', fontsize=20)
+    plt.xlabel('Profit', color='white')
+    plt.ylabel('Frequency', color='white')
 
     # Add data labels to the histogram
     for count, bin_edge, patch in zip(counts, bin_edges, patches):
